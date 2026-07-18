@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meteran — Simulasi & Pemantauan Listrik Harian</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg-deep:#0D1420;
+    --panel:#151F2F;
+    --panel-alt:#1B2738;
+    --hairline:#28344a;
+    --text-primary:#EDF1F7;
+    --text-muted:#8592A6;
+    --amber:#FFB020;
+    --amber-dim:#7a5a1f;
+    --teal:#34D6B4;
+    --red:#FF6B5B;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 15% -10%, #1c2a42 0%, transparent 45%),
+      radial-gradient(circle at 100% 0%, #16202f 0%, transparent 40%),
+      var(--bg-deep);
+    color:var(--text-primary);
+    font-family:'Manrope',sans-serif;
+    min-height:100vh;
+    padding:28px 16px 60px;
+  }
+  .wrap{max-width:1080px;margin:0 auto;}
+  .hidden{display:none !important;}
+
+  /* ---------- Lock / Profile screen ---------- */
+  #lockScreen{
+    min-height:80vh;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .lock-card{
+    background:var(--panel);
+    border:1px solid var(--hairline);
+    border-radius:18px;
+    padding:32px;
+    width:100%;max-width:360px;
+    text-align:center;
+  }
+  .lock-icon{
+    width:52px;height:52px;border-radius:50%;
+    background:var(--panel-alt);border:1px solid var(--hairline);
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 16px;font-size:22px;color:var(--amber);
+  }
+  .lock-card h2{margin:0 0 4px;font-size:19px;font-weight:800;}
+  .lock-card p.sub{color:var(--text-muted);font-size:13px;margin:0 0 20px;}
+  .lock-card label{
+    display:block;text-align:left;font-family:'Space Mono',monospace;font-size:10.5px;
+    letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin:12px 0 6px;
+  }
+  .lock-card input{
+    width:100%;background:var(--panel-alt);border:1px solid var(--hairline);
+    color:var(--text-primary);border-radius:8px;padding:10px 11px;font-size:14px;outline:none;
+    font-family:'Manrope',sans-serif;
+  }
+  .lock-card input:focus{border-color:var(--amber);}
+  .lock-btn{
+    width:100%;margin-top:18px;background:var(--amber);color:#241a05;border:none;
+    border-radius:8px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;
+  }
+  .lock-btn:hover{background:#ffc247;}
+  .lock-error{color:var(--red);font-size:12.5px;margin-top:10px;min-height:16px;}
+  .lock-note{color:var(--text-muted);font-size:11px;margin-top:14px;line-height:1.5;}
+  .lock-link{
+    background:none;border:none;color:var(--amber);font-size:12px;cursor:pointer;
+    margin-top:10px;text-decoration:underline;font-family:'Manrope',sans-serif;
+  }
+
+  header{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    flex-wrap:wrap;gap:16px;
+    margin-bottom:20px;
+    border-bottom:1px solid var(--hairline);
+    padding-bottom:18px;
+  }
+  .brand-eyebrow{
+    font-family:'Space Mono',monospace;
+    font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--amber);margin:0 0 6px;
+  }
+  h1{margin:0;font-size:28px;font-weight:800;letter-spacing:-0.02em;}
+  header p{margin:6px 0 0;color:var(--text-muted);font-size:14px;max-width:420px;}
+
+  .profile-chip{
+    display:flex;align-items:center;gap:10px;
+    background:var(--panel);border:1px solid var(--hairline);
+    border-radius:999px;padding:6px 14px 6px 6px;
+  }
+  .profile-avatar{
+    width:30px;height:30px;border-radius:50%;
+    background:var(--amber);color:#241a05;font-weight:800;font-size:13px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .profile-name{font-size:13px;font-weight:700;}
+  .profile-logout{
+    background:none;border:none;color:var(--text-muted);font-size:11px;cursor:pointer;
+    text-decoration:underline;font-family:'Manrope',sans-serif;margin-left:4px;
+  }
+
+  .tarif-box{
+    background:var(--panel);
+    border:1px solid var(--hairline);
+    border-radius:14px;
+    padding:14px 16px;
+    min-width:260px;
+  }
+  .tarif-box label{
+    display:block;font-family:'Space Mono',monospace;font-size:10.5px;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);
+    margin-bottom:6px;
+  }
+  select, input[type=number], input[type=text], input[type=password], input[type=date]{
+    width:100%;
+    background:var(--panel-alt);
+    border:1px solid var(--hairline);
+    color:var(--text-primary);
+    border-radius:8px;
+    padding:9px 10px;
+    font-family:'Manrope',sans-serif;
+    font-size:14px;
+    outline:none;
+  }
+  select:focus, input:focus{border-color:var(--amber);}
+  .tarif-row{display:flex;gap:10px;}
+  .tarif-row > div{flex:1;}
+  .tarif-note{font-size:11.5px;color:var(--text-muted);margin-top:8px;line-height:1.5;}
+
+  /* ---------- Tabs ---------- */
+  .tabs{display:flex;gap:8px;margin-bottom:18px;border-bottom:1px solid var(--hairline);}
+  .tab-btn{
+    background:none;border:none;color:var(--text-muted);
+    font-family:'Manrope',sans-serif;font-weight:700;font-size:14px;
+    padding:10px 4px 12px;cursor:pointer;position:relative;
+  }
+  .tab-btn.active{color:var(--text-primary);}
+  .tab-btn.active::after{
+    content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--amber);
+  }
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
+
+  .grid{
+    display:grid;
+    grid-template-columns:1.15fr 0.85fr;
+    gap:20px;
+  }
+  @media (max-width:820px){ .grid{grid-template-columns:1fr;} }
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--hairline);
+    border-radius:16px;
+    padding:20px;
+  }
+  .card h2{
+    font-size:13px;letter-spacing:.1em;text-transform:uppercase;
+    font-family:'Space Mono',monospace;color:var(--text-muted);
+    margin:0 0 16px;font-weight:400;
+  }
+
+  .form-row{display:flex;gap:10px;margin-bottom:10px;}
+  .form-row > div{flex:1;}
+  .form-row.thirds > div{flex:1;}
+  .field-label{
+    display:block;font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;
+  }
+  button.add-btn{
+    width:100%;
+    margin-top:6px;
+    background:var(--amber);
+    color:#241a05;
+    border:none;
+    border-radius:8px;
+    padding:11px;
+    font-family:'Manrope',sans-serif;
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+    transition:transform .12s ease, background .12s ease;
+  }
+  button.add-btn:hover{background:#ffc247;transform:translateY(-1px);}
+  button.add-btn:active{transform:translateY(0);}
+  button.ghost-btn{
+    width:100%;margin-top:8px;background:transparent;border:1px solid var(--hairline);
+    color:var(--text-muted);border-radius:8px;padding:9px;font-family:'Manrope',sans-serif;
+    font-size:12.5px;cursor:pointer;
+  }
+  button.ghost-btn:hover{color:var(--text-primary);border-color:var(--amber-dim);}
+
+  .appliance-list{margin-top:18px;display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto;padding-right:4px;}
+  .appliance-list::-webkit-scrollbar{width:6px;}
+  .appliance-list::-webkit-scrollbar-thumb{background:var(--hairline);border-radius:4px;}
+
+  .item{
+    display:grid;
+    grid-template-columns:auto 1fr auto auto;
+    align-items:center;
+    gap:12px;
+    background:var(--panel-alt);
+    border:1px solid var(--hairline);
+    border-radius:10px;
+    padding:10px 12px;
+  }
+  .item .dot{
+    width:8px;height:8px;border-radius:50%;background:var(--amber);
+    box-shadow:0 0 8px var(--amber);
+  }
+  .item .name{font-weight:600;font-size:13.5px;}
+  .item .meta{font-family:'Space Mono',monospace;font-size:11px;color:var(--text-muted);margin-top:2px;}
+  .item .cost{
+    font-family:'Space Mono',monospace;font-size:13px;color:var(--teal);
+    text-align:right;white-space:nowrap;
+  }
+  .item .remove{
+    background:none;border:none;color:var(--text-muted);
+    cursor:pointer;font-size:16px;line-height:1;padding:4px;
+    transition:color .12s;
+  }
+  .item .remove:hover{color:var(--red);}
+  .empty-state{
+    color:var(--text-muted);font-size:13px;text-align:center;
+    padding:30px 10px;border:1px dashed var(--hairline);border-radius:10px;
+  }
+
+  .meter-wrap{display:flex;flex-direction:column;align-items:center;}
+  .dial-svg{width:220px;height:220px;}
+  .disc{
+    transform-origin:110px 110px;
+    animation:spin 6s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .odometer{
+    display:flex;gap:4px;margin-top:14px;
+  }
+  .odometer .digit{
+    background:#050a12;
+    border:1px solid var(--hairline);
+    border-radius:6px;
+    width:34px;height:46px;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Space Mono',monospace;
+    font-size:24px;font-weight:700;
+    color:var(--amber);
+  }
+  .odometer-unit{
+    font-family:'Space Mono',monospace;
+    font-size:11px;color:var(--text-muted);
+    letter-spacing:.14em;text-transform:uppercase;
+    margin-top:8px;
+  }
+
+  .stats{
+    display:grid;grid-template-columns:1fr 1fr;gap:10px;
+    margin-top:20px;width:100%;
+  }
+  .stat{
+    background:var(--panel-alt);border:1px solid var(--hairline);
+    border-radius:10px;padding:12px;
+  }
+  .stat .label{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);}
+  .stat .value{font-size:18px;font-weight:800;margin-top:4px;}
+  .stat.wide{grid-column:1/-1;}
+  .stat .value.amber{color:var(--amber);}
+  .stat .value.teal{color:var(--teal);}
+
+  .breakdown{margin-top:22px;width:100%;}
+  .bd-row{margin-bottom:10px;}
+  .bd-top{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;}
+  .bd-top .bname{color:var(--text-primary);font-weight:600;}
+  .bd-top .bpct{font-family:'Space Mono',monospace;color:var(--text-muted);}
+  .bd-track{height:6px;background:var(--panel-alt);border-radius:4px;overflow:hidden;border:1px solid var(--hairline);}
+  .bd-fill{height:100%;background:linear-gradient(90deg,var(--amber),var(--teal));border-radius:4px;transition:width .3s ease;}
+
+  /* ---------- Aktual tab ---------- */
+  .chart-wrap{
+    background:var(--panel-alt);border:1px solid var(--hairline);
+    border-radius:12px;padding:14px;margin-top:16px;
+  }
+  .chart-wrap canvas{max-height:220px;}
+  .projection-card{
+    background:linear-gradient(135deg, rgba(255,176,32,0.12), rgba(52,214,180,0.08));
+    border:1px solid var(--amber-dim);
+    border-radius:12px;padding:16px;margin-top:16px;
+  }
+  .projection-card .label{font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);}
+  .projection-card .value{font-size:26px;font-weight:800;color:var(--amber);margin-top:4px;}
+  .projection-card .sub{font-size:12px;color:var(--text-muted);margin-top:6px;line-height:1.5;}
+
+  .footnote{
+    margin-top:28px;text-align:center;color:var(--text-muted);
+    font-size:11.5px;font-family:'Space Mono',monospace;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===================== LOCK / PROFILE SCREEN ===================== -->
+  <div id="lockScreen">
+    <div class="lock-card">
+      <div class="lock-icon">⚡</div>
+
+      <!-- Setup mode (belum ada profil) -->
+      <div id="setupForm">
+        <h2>Buat Profil Kamu</h2>
+        <p class="sub">Data pemakaian listrikmu akan dikunci dengan profil ini.</p>
+        <label>Nama</label>
+        <input type="text" id="setupName" placeholder="mis. Budi">
+        <label>Password</label>
+        <input type="password" id="setupPass" placeholder="Minimal 4 karakter">
+        <label>Konfirmasi Password</label>
+        <input type="password" id="setupPassConfirm" placeholder="Ulangi password">
+        <button class="lock-btn" id="setupBtn">Buat Profil & Mulai</button>
+        <div class="lock-error" id="setupError"></div>
+        <p class="lock-note">Ini kunci ringan untuk akses cepat ke datamu di perangkat/akun ini — bukan enkripsi tingkat keamanan tinggi, jadi jangan pakai password penting lainnya.</p>
+      </div>
+
+      <!-- Login mode (profil sudah ada) -->
+      <div id="loginForm" class="hidden">
+        <h2 id="loginGreeting">Halo lagi!</h2>
+        <p class="sub">Masukkan password untuk membuka datamu.</p>
+        <label>Password</label>
+        <input type="password" id="loginPass" placeholder="Password kamu">
+        <button class="lock-btn" id="loginBtn">Buka</button>
+        <div class="lock-error" id="loginError"></div>
+        <button class="lock-link" id="forgotBtn">Lupa password? Reset profil</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== MAIN APP ===================== -->
+  <div id="appMain" class="hidden">
+
+    <header>
+      <div>
+        <p class="brand-eyebrow">Simulasi &amp; Pemantauan Konsumsi Daya</p>
+        <h1>Meteran</h1>
+        <p>Simulasikan pemakaian dari daftar peralatan, atau catat pemakaian aktual harian untuk lihat proyeksi tagihan bulanan.</p>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px;">
+        <div class="profile-chip">
+          <div class="profile-avatar" id="avatarInitial">?</div>
+          <div class="profile-name" id="profileNameLabel">—</div>
+          <button class="profile-logout" id="logoutBtn">Kunci</button>
+        </div>
+        <div class="tarif-box">
+          <div class="tarif-row">
+            <div>
+              <label>Daya Terpasang</label>
+              <select id="dayaSelect"></select>
+            </div>
+            <div>
+              <label>Tarif (Rp/kWh)</label>
+              <input type="number" id="tarifInput" step="1">
+            </div>
+          </div>
+          <p class="tarif-note">Tarif otomatis terisi berdasarkan golongan (perkiraan TDL PLN), tapi bisa kamu ubah manual sesuai tagihan terbaru. Cek tarif resmi di pln.co.id.</p>
+        </div>
+      </div>
+    </header>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="proyeksi">Proyeksi</button>
+      <button class="tab-btn" data-tab="aktual">Aktual Pemakaian</button>
+    </div>
+
+    <!-- ============ TAB: PROYEKSI ============ -->
+    <div class="tab-panel active" id="tab-proyeksi">
+      <div class="grid">
+
+        <div class="card">
+          <h2>Tambah Peralatan</h2>
+
+          <div class="form-row">
+            <div>
+              <label class="field-label">Kategori Alat</label>
+              <select id="categorySelect"></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div>
+              <label class="field-label">Merk / Model</label>
+              <select id="applianceSelect"></select>
+            </div>
+          </div>
+
+          <div class="form-row thirds">
+            <div>
+              <label class="field-label">Daya (Watt) <span style="opacity:.6;">— otomatis</span></label>
+              <input type="number" id="wattInput" min="1">
+            </div>
+            <div>
+              <label class="field-label">Jumlah Unit</label>
+              <input type="number" id="qtyInput" min="1" value="1">
+            </div>
+            <div>
+              <label class="field-label">Jam / Hari</label>
+              <input type="number" id="hoursInput" min="0.5" step="0.5" value="1">
+            </div>
+          </div>
+
+          <button class="add-btn" id="addBtn">+ Tambahkan ke Daftar</button>
+          <button class="ghost-btn" id="resetItemsBtn">Hapus Semua Data Tersimpan</button>
+
+          <div class="appliance-list" id="applianceList">
+            <div class="empty-state">Belum ada peralatan ditambahkan.<br>Pilih jenis alat di atas untuk mulai simulasi.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Estimasi Meteran</h2>
+          <div class="meter-wrap">
+            <svg class="dial-svg" viewBox="0 0 220 220">
+              <circle cx="110" cy="110" r="95" fill="none" stroke="#28344a" stroke-width="10"/>
+              <circle id="gaugeArc" cx="110" cy="110" r="95" fill="none" stroke="#FFB020" stroke-width="10"
+                      stroke-linecap="round" stroke-dasharray="597" stroke-dashoffset="597"
+                      transform="rotate(-90 110 110)" style="transition:stroke-dashoffset .4s ease;"/>
+              <g class="disc" id="discGroup">
+                <circle cx="110" cy="110" r="55" fill="#151F2F" stroke="#28344a" stroke-width="2"/>
+                <rect x="108" y="58" width="4" height="20" fill="#34D6B4" rx="2"/>
+                <circle cx="110" cy="110" r="4" fill="#FFB020"/>
+              </g>
+            </svg>
+
+            <div class="odometer" id="odometer"></div>
+            <div class="odometer-unit">kWh / hari</div>
+
+            <div class="stats">
+              <div class="stat">
+                <div class="label">Biaya / Hari</div>
+                <div class="value amber" id="costDay">Rp0</div>
+              </div>
+              <div class="stat">
+                <div class="label">Biaya / Bulan</div>
+                <div class="value teal" id="costMonth">Rp0</div>
+              </div>
+              <div class="stat wide">
+                <div class="label">Total Daya Terpakai</div>
+                <div class="value" id="totalWatt">0 Watt</div>
+              </div>
+            </div>
+
+            <div class="breakdown" id="breakdown"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ============ TAB: AKTUAL PEMAKAIAN ============ -->
+    <div class="tab-panel" id="tab-aktual">
+      <div class="grid">
+
+        <div class="card">
+          <h2>Catat Pemakaian Aktual</h2>
+          <p style="color:var(--text-muted);font-size:12.5px;margin-top:-8px;margin-bottom:14px;">Masukkan angka kWh dari meteran/PLN Mobile setiap hari untuk melacak pemakaian sebenarnya.</p>
+
+          <div class="form-row">
+            <div>
+              <label class="field-label">Tanggal</label>
+              <input type="date" id="actualDate">
+            </div>
+            <div>
+              <label class="field-label">Pemakaian (kWh)</label>
+              <input type="number" id="actualKwh" min="0" step="0.1" placeholder="mis. 5.2">
+            </div>
+          </div>
+          <button class="add-btn" id="addActualBtn">+ Catat Pemakaian Hari Ini</button>
+          <button class="ghost-btn" id="resetActualBtn">Hapus Semua Riwayat Aktual</button>
+
+          <div class="appliance-list" id="actualList">
+            <div class="empty-state">Belum ada catatan pemakaian aktual.<br>Mulai catat dari hari ini.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Tren &amp; Proyeksi Bulanan</h2>
+          <div class="chart-wrap">
+            <canvas id="actualChart"></canvas>
+          </div>
+
+          <div class="projection-card">
+            <div class="label">Proyeksi Biaya Bulan Ini</div>
+            <div class="value" id="projMonthCost">Rp0</div>
+            <div class="sub" id="projMonthDetail">Belum ada data pemakaian aktual yang tercatat.</div>
+          </div>
+
+          <div class="stats">
+            <div class="stat">
+              <div class="label">Rata-rata / Hari</div>
+              <div class="value teal" id="avgKwhDay">0 kWh</div>
+            </div>
+            <div class="stat">
+              <div class="label">Total Tercatat</div>
+              <div class="value" id="totalRecordedKwh">0 kWh</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <p class="footnote">Database watt disusun dari spesifikasi merk populer (Daikin, Panasonic, Sharp, LG, Samsung, Polytron, Miyako, Cosmos, Sanyo, Ariston, Maspion, Gree, Sanken, dll) per Juli 2026 — angka aktual bisa beda tipis per model, kolom watt tetap bisa diedit manual.</p>
+  </div>
+
+</div>
+
+<script>
+// ================= Data base watt per kategori & merk (hasil riset, Juli 2026) =================
+const applianceCategories = [
+  {
+    category: "AC / Pendingin Ruangan",
+    items: [
+      {name:"AC 1/2 PK Non-Inverter (Sharp/Panasonic)", watt:380},
+      {name:"AC 1/2 PK Inverter (Daikin/LG)", watt:350},
+      {name:"AC 1/2 PK Standard (Gree)", watt:370},
+      {name:"AC 3/4 PK Standar", watt:600},
+      {name:"AC 1 PK Non-Inverter (Standar)", watt:870},
+      {name:"AC 1 PK Inverter (Daikin)", watt:650},
+      {name:"AC 1.5 PK Standar", watt:1010},
+      {name:"AC 2 PK Standar", watt:1500},
+    ]
+  },
+  {
+    category: "Kulkas / Lemari Es",
+    items: [
+      {name:"Kulkas 1 Pintu Hemat (AQUA)", watt:40},
+      {name:"Kulkas 1 Pintu Standar (LG/Sharp)", watt:65},
+      {name:"Kulkas 1 Pintu (Panasonic)", watt:67},
+      {name:"Kulkas 1 Pintu (Polytron)", watt:90},
+      {name:"Kulkas 2 Pintu Inverter (Polytron Belleza)", watt:70},
+      {name:"Kulkas 2 Pintu Standar (Polytron/Sharp)", watt:140},
+      {name:"Kulkas 2 Pintu Besar (LG)", watt:220},
+    ]
+  },
+  {
+    category: "TV / Televisi",
+    items: [
+      {name:"TV LED 32\" (Sony)", watt:38},
+      {name:"TV LED 32\" (Samsung/LG)", watt:48},
+      {name:"TV LED 43\" (Samsung)", watt:80},
+      {name:"TV LED 43\" (Sony)", watt:96},
+      {name:"TV LED 43\" (LG)", watt:110},
+      {name:"TV QLED 43\" (LG)", watt:75},
+      {name:"TV LED 50\" Smart TV (umum)", watt:85},
+      {name:"TV LED 55\" (Samsung)", watt:145},
+    ]
+  },
+  {
+    category: "Rice Cooker",
+    items: [
+      {name:"Rice Cooker Cosmos (memasak)", watt:350},
+      {name:"Rice Cooker Miyako (memasak)", watt:375},
+      {name:"Rice Cooker Philips Digital (memasak)", watt:400},
+      {name:"Rice Cooker — mode menghangatkan saja", watt:60},
+    ]
+  },
+  {
+    category: "Mesin Cuci",
+    items: [
+      {name:"Mesin Cuci 2 Tabung / Twin Tub (umum)", watt:300},
+      {name:"Mesin Cuci Top Loading (Sharp/Samsung)", watt:350},
+      {name:"Mesin Cuci Top Loading (LG)", watt:400},
+      {name:"Mesin Cuci Front Loading Inverter (Samsung)", watt:300},
+      {name:"Mesin Cuci Front Loading (Electrolux)", watt:350},
+    ]
+  },
+  {
+    category: "Kipas Angin",
+    items: [
+      {name:"Kipas Angin Meja Mini", watt:20},
+      {name:"Kipas Angin Berdiri 16\" (Maspion)", watt:55},
+      {name:"Kipas Angin Berdiri (Sanken)", watt:46},
+      {name:"Kipas Angin Dinding 16\" (Maspion)", watt:50},
+      {name:"Kipas Angin Power (Maspion)", watt:80},
+      {name:"Exhaust Fan (Panasonic)", watt:12},
+      {name:"Exhaust Fan (Maspion)", watt:30},
+    ]
+  },
+  {
+    category: "Dispenser",
+    items: [
+      {name:"Dispenser Hot & Cool (Miyako)", watt:420},
+      {name:"Dispenser Hot & Normal (umum)", watt:350},
+    ]
+  },
+  {
+    category: "Pompa Air",
+    items: [
+      {name:"Pompa Air Sumur Dangkal 125W (Sanyo)", watt:125},
+      {name:"Pompa Air Sumur Dangkal 200W (Sanyo)", watt:200},
+      {name:"Pompa Air Jet Pump 250W (Sanyo)", watt:250},
+      {name:"Pompa Air Sumur Dangkal (Shimizu)", watt:300},
+    ]
+  },
+  {
+    category: "Water Heater",
+    items: [
+      {name:"Water Heater 10L (Ariston)", watt:200},
+      {name:"Water Heater 30L (Ariston)", watt:350},
+      {name:"Water Heater (Modena, perkiraan)", watt:400},
+    ]
+  },
+  {
+    category: "Setrika",
+    items: [
+      {name:"Setrika (Panasonic)", watt:300},
+      {name:"Setrika (Philips)", watt:350},
+    ]
+  },
+  {
+    category: "Elektronik & Lainnya",
+    items: [
+      {name:"Lampu LED", watt:10},
+      {name:"Lampu Pijar", watt:40},
+      {name:"Charger HP", watt:10},
+      {name:"Laptop / PC", watt:65},
+      {name:"Router WiFi", watt:10},
+      {name:"Lainnya (isi watt manual)", watt:100},
+    ]
+  },
+];
+
+const tarifPresets = [
+  {label:"450 VA (Subsidi)", va:450, tarif:415},
+  {label:"900 VA (Subsidi)", va:900, tarif:605},
+  {label:"900 VA (Non-subsidi)", va:901, tarif:1352},
+  {label:"1300 VA", va:1300, tarif:1444},
+  {label:"2200 VA", va:2200, tarif:1444},
+  {label:"3500–5500 VA", va:3500, tarif:1699},
+  {label:"6600 VA ke atas", va:6600, tarif:1699},
+];
+
+// ================= State =================
+let items = [];
+let idCounter = 0;
+let actualLogs = []; // {id, date:'YYYY-MM-DD', kwh}
+let actualIdCounter = 0;
+let storageReady = false;
+let actualChartInstance = null;
+
+// ================= Simple local passcode (bukan enkripsi keamanan tinggi) =================
+function simpleHash(str){
+  let h = 5381;
+  for(let i=0;i<str.length;i++){
+    h = ((h << 5) + h) + str.charCodeAt(i);
+    h = h & h;
+  }
+  return (h >>> 0).toString(16);
+}
+
+const setupForm = document.getElementById('setupForm');
+const loginForm = document.getElementById('loginForm');
+const lockScreen = document.getElementById('lockScreen');
+const appMain = document.getElementById('appMain');
+
+async function checkProfile(){
+  try{
+    const res = await window.storage.get('meteran-profile', false);
+    if(res && res.value){
+      const profile = JSON.parse(res.value);
+      document.getElementById('loginGreeting').textContent = `Halo, ${profile.name}!`;
+      setupForm.classList.add('hidden');
+      loginForm.classList.remove('hidden');
+    } else {
+      setupForm.classList.remove('hidden');
+      loginForm.classList.add('hidden');
+    }
+  }catch(e){
+    setupForm.classList.remove('hidden');
+    loginForm.classList.add('hidden');
+  }
+}
+
+document.getElementById('setupBtn').addEventListener('click', async ()=>{
+  const name = document.getElementById('setupName').value.trim();
+  const pass = document.getElementById('setupPass').value;
+  const confirmPass = document.getElementById('setupPassConfirm').value;
+  const errEl = document.getElementById('setupError');
+  if(!name){ errEl.textContent = 'Nama wajib diisi.'; return; }
+  if(pass.length < 4){ errEl.textContent = 'Password minimal 4 karakter.'; return; }
+  if(pass !== confirmPass){ errEl.textContent = 'Konfirmasi password tidak sama.'; return; }
+  errEl.textContent = '';
+  try{
+    await window.storage.set('meteran-profile', JSON.stringify({name, passHash: simpleHash(pass)}), false);
+    await unlockApp(name);
+  }catch(e){
+    errEl.textContent = 'Gagal menyimpan profil, coba lagi.';
+  }
+});
+
+document.getElementById('loginBtn').addEventListener('click', async ()=>{
+  const pass = document.getElementById('loginPass').value;
+  const errEl = document.getElementById('loginError');
+  try{
+    const res = await window.storage.get('meteran-profile', false);
+    const profile = JSON.parse(res.value);
+    if(simpleHash(pass) === profile.passHash){
+      errEl.textContent = '';
+      await unlockApp(profile.name);
+    } else {
+      errEl.textContent = 'Password salah, coba lagi.';
+    }
+  }catch(e){
+    errEl.textContent = 'Terjadi kesalahan, coba lagi.';
+  }
+});
+
+document.getElementById('forgotBtn').addEventListener('click', async ()=>{
+  if(!confirm('Reset profil akan menghapus password lama (data peralatan & riwayat TIDAK terhapus). Lanjutkan?')) return;
+  try{
+    await window.storage.delete('meteran-profile', false);
+  }catch(e){}
+  checkProfile();
+});
+
+document.getElementById('logoutBtn').addEventListener('click', ()=>{
+  appMain.classList.add('hidden');
+  lockScreen.classList.remove('hidden');
+  document.getElementById('loginPass').value = '';
+  checkProfile();
+});
+
+async function unlockApp(name){
+  document.getElementById('profileNameLabel').textContent = name;
+  document.getElementById('avatarInitial').textContent = name.charAt(0).toUpperCase();
+  lockScreen.classList.add('hidden');
+  appMain.classList.remove('hidden');
+  const listEl = document.getElementById('applianceList');
+  listEl.innerHTML = '<div class="empty-state">Memuat data tersimpan…</div>';
+  await loadData();
+  renderProyeksi();
+  renderAktual();
+}
+
+// ================= Tabs =================
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+    if(btn.dataset.tab === 'aktual' && actualChartInstance){
+      actualChartInstance.resize();
+    }
+  });
+});
+
+// ================= Populate selects (kategori -> merk/model) =================
+const categorySelect = document.getElementById('categorySelect');
+const applianceSelect = document.getElementById('applianceSelect');
+const wattInput = document.getElementById('wattInput');
+
+applianceCategories.forEach((cat,i)=>{
+  const opt = document.createElement('option');
+  opt.value = i; opt.textContent = cat.category;
+  categorySelect.appendChild(opt);
+});
+
+function populateModels(){
+  const cat = applianceCategories[categorySelect.value];
+  applianceSelect.innerHTML = '';
+  cat.items.forEach((item,i)=>{
+    const opt = document.createElement('option');
+    opt.value = i; opt.textContent = `${item.name} (~${item.watt}W)`;
+    applianceSelect.appendChild(opt);
+  });
+  wattInput.value = cat.items[0].watt;
+}
+populateModels();
+categorySelect.addEventListener('change', populateModels);
+applianceSelect.addEventListener('change', ()=>{
+  const cat = applianceCategories[categorySelect.value];
+  wattInput.value = cat.items[applianceSelect.value].watt;
+});
+
+const dayaSelect = document.getElementById('dayaSelect');
+tarifPresets.forEach((t,i)=>{
+  const opt = document.createElement('option');
+  opt.value = i; opt.textContent = t.label;
+  dayaSelect.appendChild(opt);
+});
+dayaSelect.selectedIndex = 3;
+const tarifInput = document.getElementById('tarifInput');
+tarifInput.value = tarifPresets[3].tarif;
+dayaSelect.addEventListener('change', ()=>{
+  tarifInput.value = tarifPresets[dayaSelect.value].tarif;
+  renderProyeksi();
+  renderAktual();
+  saveData();
+});
+tarifInput.addEventListener('input', ()=>{ renderProyeksi(); renderAktual(); saveData(); });
+
+// ================= Persistensi (personal per profil) =================
+async function saveData(){
+  if(!storageReady) return;
+  try{
+    await window.storage.set('meteran-items', JSON.stringify(items), false);
+    await window.storage.set('meteran-actual-logs', JSON.stringify(actualLogs), false);
+    await window.storage.set('meteran-settings', JSON.stringify({
+      daya: dayaSelect.selectedIndex,
+      tarif: tarifInput.value
+    }), false);
+  }catch(e){ console.error('Gagal menyimpan data:', e); }
+}
+
+async function loadData(){
+  try{
+    const saved = await window.storage.get('meteran-items', false);
+    if(saved && saved.value){
+      items = JSON.parse(saved.value);
+      idCounter = items.reduce((m,it)=>Math.max(m,it.id+1),0);
+    }
+  }catch(e){}
+  try{
+    const saved = await window.storage.get('meteran-actual-logs', false);
+    if(saved && saved.value){
+      actualLogs = JSON.parse(saved.value);
+      actualIdCounter = actualLogs.reduce((m,it)=>Math.max(m,it.id+1),0);
+    }
+  }catch(e){}
+  try{
+    const saved = await window.storage.get('meteran-settings', false);
+    if(saved && saved.value){
+      const s = JSON.parse(saved.value);
+      if(s.daya!=null) dayaSelect.selectedIndex = s.daya;
+      if(s.tarif!=null) tarifInput.value = s.tarif;
+    }
+  }catch(e){}
+  storageReady = true;
+}
+
+async function resetItems(){
+  if(!confirm('Hapus semua data peralatan (Proyeksi) yang tersimpan?')) return;
+  items = [];
+  idCounter = 0;
+  try{ await window.storage.delete('meteran-items', false); }catch(e){}
+  renderProyeksi();
+}
+
+async function resetActual(){
+  if(!confirm('Hapus semua riwayat pemakaian aktual?')) return;
+  actualLogs = [];
+  actualIdCounter = 0;
+  try{ await window.storage.delete('meteran-actual-logs', false); }catch(e){}
+  renderAktual();
+}
+
+document.getElementById('resetItemsBtn').addEventListener('click', resetItems);
+document.getElementById('resetActualBtn').addEventListener('click', resetActual);
+
+// ================= Add item (Proyeksi) =================
+document.getElementById('addBtn').addEventListener('click', ()=>{
+  const cat = applianceCategories[categorySelect.value];
+  const preset = cat.items[applianceSelect.value];
+  const watt = parseFloat(wattInput.value) || 0;
+  const qty = parseFloat(document.getElementById('qtyInput').value) || 1;
+  const hours = parseFloat(document.getElementById('hoursInput').value) || 0;
+  if(watt<=0 || hours<=0) return;
+  items.push({id:idCounter++, name:preset.name.replace(/\s*—.*$/,''), watt, qty, hours});
+  renderProyeksi();
+  saveData();
+});
+
+function removeItem(id){
+  items = items.filter(it=>it.id!==id);
+  renderProyeksi();
+  saveData();
+}
+
+function formatRp(n){
+  return "Rp" + Math.round(n).toLocaleString('id-ID');
+}
+
+function renderProyeksi(){
+  const listEl = document.getElementById('applianceList');
+  const tarif = parseFloat(tarifInput.value) || 0;
+
+  if(items.length===0){
+    listEl.innerHTML = '<div class="empty-state">Belum ada peralatan ditambahkan.<br>Pilih jenis alat di atas untuk mulai simulasi.</div>';
+  } else {
+    listEl.innerHTML = items.map(it=>{
+      const kwh = (it.watt*it.qty*it.hours)/1000;
+      const cost = kwh*tarif;
+      return `<div class="item">
+        <div class="dot"></div>
+        <div>
+          <div class="name">${it.name} ${it.qty>1?`×${it.qty}`:''}</div>
+          <div class="meta">${it.watt}W · ${it.hours}j/hari · ${kwh.toFixed(2)} kWh</div>
+        </div>
+        <div class="cost">${formatRp(cost)}</div>
+        <button class="remove" onclick="removeItem(${it.id})" aria-label="Hapus">✕</button>
+      </div>`;
+    }).join('');
+  }
+
+  const totalWatt = items.reduce((s,it)=>s+it.watt*it.qty,0);
+  const totalKwh = items.reduce((s,it)=>s+(it.watt*it.qty*it.hours)/1000,0);
+  const totalCostDay = totalKwh*tarif;
+  const totalCostMonth = totalCostDay*30;
+
+  document.getElementById('totalWatt').textContent = totalWatt.toLocaleString('id-ID') + " Watt";
+  document.getElementById('costDay').textContent = formatRp(totalCostDay);
+  document.getElementById('costMonth').textContent = formatRp(totalCostMonth);
+
+  const kwhStr = totalKwh.toFixed(2).padStart(5,'0');
+  const odo = document.getElementById('odometer');
+  odo.innerHTML = kwhStr.split('').map(ch=>{
+    if(ch==='.') return `<div style="display:flex;align-items:flex-end;font-family:'Space Mono',monospace;font-size:24px;color:var(--amber);padding-bottom:6px;">.</div>`;
+    return `<div class="digit">${ch}</div>`;
+  }).join('');
+
+  const maxRef = 25;
+  const pct = Math.min(totalKwh/maxRef, 1);
+  const circumference = 597;
+  document.getElementById('gaugeArc').style.strokeDashoffset = circumference - (circumference*pct);
+
+  const disc = document.getElementById('discGroup');
+  const speed = totalWatt>0 ? Math.max(1.2, 8 - (totalWatt/1000)) : 999;
+  disc.style.animation = totalWatt>0 ? `spin ${speed}s linear infinite` : 'none';
+
+  const bdEl = document.getElementById('breakdown');
+  if(items.length===0){
+    bdEl.innerHTML = '';
+  } else {
+    const withCost = items.map(it=>{
+      const kwh=(it.watt*it.qty*it.hours)/1000;
+      return {name:it.name, cost:kwh*tarif};
+    }).sort((a,b)=>b.cost-a.cost);
+    const maxCost = Math.max(...withCost.map(w=>w.cost),1);
+    bdEl.innerHTML = withCost.map(w=>{
+      const pctW = (w.cost/maxCost)*100;
+      const pctOfTotal = totalCostDay>0 ? (w.cost/totalCostDay*100).toFixed(0) : 0;
+      return `<div class="bd-row">
+        <div class="bd-top"><span class="bname">${w.name}</span><span class="bpct">${pctOfTotal}%</span></div>
+        <div class="bd-track"><div class="bd-fill" style="width:${pctW}%"></div></div>
+      </div>`;
+    }).join('');
+  }
+}
+
+// ================= Aktual Pemakaian =================
+const actualDateInput = document.getElementById('actualDate');
+(function setDefaultDate(){
+  const today = new Date();
+  actualDateInput.value = today.toISOString().slice(0,10);
+})();
+
+document.getElementById('addActualBtn').addEventListener('click', ()=>{
+  const date = actualDateInput.value;
+  const kwh = parseFloat(document.getElementById('actualKwh').value);
+  if(!date || isNaN(kwh) || kwh<0) return;
+  const existingIdx = actualLogs.findIndex(l=>l.date===date);
+  if(existingIdx>=0){
+    actualLogs[existingIdx].kwh = kwh;
+  } else {
+    actualLogs.push({id:actualIdCounter++, date, kwh});
+  }
+  document.getElementById('actualKwh').value = '';
+  renderAktual();
+  saveData();
+});
+
+function removeActual(id){
+  actualLogs = actualLogs.filter(l=>l.id!==id);
+  renderAktual();
+  saveData();
+}
+
+function renderAktual(){
+  const tarif = parseFloat(tarifInput.value) || 0;
+  const sorted = [...actualLogs].sort((a,b)=> a.date < b.date ? 1 : -1);
+  const listEl = document.getElementById('actualList');
+
+  if(sorted.length===0){
+    listEl.innerHTML = '<div class="empty-state">Belum ada catatan pemakaian aktual.<br>Mulai catat dari hari ini.</div>';
+  } else {
+    listEl.innerHTML = sorted.map(l=>{
+      const cost = l.kwh*tarif;
+      const dateLabel = new Date(l.date+'T00:00:00').toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
+      return `<div class="item">
+        <div class="dot"></div>
+        <div>
+          <div class="name">${dateLabel}</div>
+          <div class="meta">${l.kwh.toFixed(2)} kWh</div>
+        </div>
+        <div class="cost">${formatRp(cost)}</div>
+        <button class="remove" onclick="removeActual(${l.id})" aria-label="Hapus">✕</button>
+      </div>`;
+    }).join('');
+  }
+
+  const totalKwh = actualLogs.reduce((s,l)=>s+l.kwh,0);
+  const avgKwh = actualLogs.length>0 ? totalKwh/actualLogs.length : 0;
+  document.getElementById('avgKwhDay').textContent = avgKwh.toFixed(2) + ' kWh';
+  document.getElementById('totalRecordedKwh').textContent = totalKwh.toFixed(2) + ' kWh';
+
+  // Proyeksi bulanan berdasarkan rata-rata harian yang tercatat
+  const now = new Date();
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+  const projMonthKwh = avgKwh * daysInMonth;
+  const projMonthCost = projMonthKwh * tarif;
+
+  const projCostEl = document.getElementById('projMonthCost');
+  const projDetailEl = document.getElementById('projMonthDetail');
+  if(actualLogs.length===0){
+    projCostEl.textContent = 'Rp0';
+    projDetailEl.textContent = 'Belum ada data pemakaian aktual yang tercatat.';
+  } else {
+    projCostEl.textContent = formatRp(projMonthCost);
+    projDetailEl.textContent = `Berdasarkan rata-rata ${avgKwh.toFixed(2)} kWh/hari dari ${actualLogs.length} catatan × ${daysInMonth} hari di bulan ini, dengan tarif ${formatRp(tarif)}/kWh.`;
+  }
+
+  // Chart tren harian
+  const chronological = [...actualLogs].sort((a,b)=> a.date < b.date ? -1 : 1);
+  const labels = chronological.map(l=> new Date(l.date+'T00:00:00').toLocaleDateString('id-ID',{day:'2-digit',month:'2-digit'}));
+  const dataPoints = chronological.map(l=>l.kwh);
+
+  const ctx = document.getElementById('actualChart').getContext('2d');
+  if(actualChartInstance){
+    actualChartInstance.data.labels = labels;
+    actualChartInstance.data.datasets[0].data = dataPoints;
+    actualChartInstance.update();
+  } else {
+    actualChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'kWh / hari',
+          data: dataPoints,
+          borderColor: '#FFB020',
+          backgroundColor: 'rgba(255,176,32,0.15)',
+          tension: 0.35,
+          fill: true,
+          pointBackgroundColor: '#FFB020',
+          pointRadius: 4,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#8592A6', font:{family:"'Space Mono',monospace", size:10} }, grid: { color:'#28344a' } },
+          y: { ticks: { color: '#8592A6', font:{family:"'Space Mono',monospace", size:10} }, grid: { color:'#28344a' }, beginAtZero:true }
+        }
+      }
+    });
+  }
+}
+
+// ================= Init =================
+checkProfile();
+</script>
+</body>
+</html>

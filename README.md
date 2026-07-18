@@ -1,25 +1,40 @@
-# 🎈 Blank app template
+# ⚡ Meteran — Tracker Listrik Harian
 
-A simple Streamlit app template for you to modify!
+Aplikasi Streamlit untuk simulasi pemakaian peralatan listrik dan pencatatan kWh harian, dengan penyimpanan data permanen via Supabase.
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://blank-app-template.streamlit.app/)
+**GitHub Repo:** `trackerlistrik1`
 
-### How to run it on your own machine
+## Setup
 
-Prerequisite: install `uv` if you don't already have it.
+### 1. Buat Supabase Project
+1. Buka [supabase.com](https://supabase.com) → New Project
+2. Masuk ke **SQL Editor** → jalankan semua isi file `supabase_setup.sql`
+3. Catat **Project URL** dan **anon/public key** dari Settings → API
 
+### 2. Jalankan Lokal
+```powershell
+py -m pip install -r requirements.txt
+py -m streamlit run app.py
 ```
-$ curl -LsSf https://astral.sh/uv/install.sh | sh
+Edit `.streamlit/secrets.toml`, isi URL dan key Supabase kamu:
+```toml
+[supabase]
+url = "https://xxxxx.supabase.co"
+key  = "your-anon-key"
 ```
 
-1. Sync the dependencies
+### 3. Deploy ke Streamlit Cloud
+1. Push repo ini ke GitHub repo **`trackerlistrik1`** (pastikan `.streamlit/secrets.toml` ada di `.gitignore` ✅)
+2. Buka [share.streamlit.io](https://share.streamlit.io) → **New App** → pilih repo `trackerlistrik1`
+3. Di **Advanced settings → Secrets**, paste:
+```toml
+[supabase]
+url = "https://xxxxx.supabase.co"
+key  = "your-anon-key"
+```
+4. Deploy — app langsung bisa diakses dari mana saja! 🚀
 
-   ```
-   $ uv sync
-   ```
-
-2. Run the app
-
-   ```
-   $ uv run streamlit run streamlit_app.py
-   ```
+## Fitur
+- 📊 **Proyeksi**: Tambah peralatan dari database, hitung estimasi tagihan harian & bulanan
+- 📅 **Aktual**: Catat kWh harian dari meteran/PLN Mobile, lihat tren & proyeksi bulanan
+- ☁️ **Cloud Storage**: Data tersimpan permanen di Supabase, tidak hilang saat refresh
