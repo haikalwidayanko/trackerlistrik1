@@ -148,9 +148,9 @@ def fmt_kwh(n):
     return f"{n:.2f} kWh"
 
 # ── Load initial data ─────────────────────────────────────────────────────────
-if "loaded" not in st.session_state:
-    st.session_state.loaded = True
-    st.session_state.items = load_items()
+if "app_loaded" not in st.session_state:
+    st.session_state.app_loaded = True
+    st.session_state.appliances = load_items()
     st.session_state.logs = load_logs()
     cfg = load_settings()
     st.session_state.daya_index = cfg.get("daya_index", 3)
@@ -224,13 +224,13 @@ with tab1:
         if st.button("➕ Tambahkan ke Daftar", use_container_width=True, type="primary"):
             name = items_in_cat[sel_item_idx]["name"]
             add_item(name, watt_in, qty_in, hours_in)
-            st.session_state.items = load_items()
+            st.session_state.appliances = load_items()
             st.rerun()
 
         if st.button("🗑️ Hapus Semua Peralatan", use_container_width=True):
             if st.session_state.get("confirm_reset_items"):
                 reset_items()
-                st.session_state.items = []
+                st.session_state.appliances = []
                 st.session_state.confirm_reset_items = False
                 st.rerun()
             else:
@@ -238,7 +238,7 @@ with tab1:
                 st.warning("Klik sekali lagi untuk konfirmasi hapus semua peralatan.")
 
         st.markdown('<div class="section-title">Daftar Peralatan</div>', unsafe_allow_html=True)
-        items_data = st.session_state.items
+        items_data = st.session_state.get("appliances", [])
         if not items_data:
             st.info("Belum ada peralatan. Tambahkan peralatan di atas untuk mulai simulasi.")
         else:
@@ -260,12 +260,12 @@ with tab1:
                 with col_b:
                     if st.button("✕", key=f"del_{it['id']}"):
                         delete_item(it["id"])
-                        st.session_state.items = load_items()
+                        st.session_state.appliances = load_items()
                         st.rerun()
 
     with right:
         st.markdown('<div class="section-title">Estimasi Meteran</div>', unsafe_allow_html=True)
-        items_data = st.session_state.items
+        items_data = st.session_state.get("appliances", [])
         total_watt = sum(it["watt"] * it["qty"] for it in items_data)
         total_kwh_day = sum((it["watt"] * it["qty"] * it["hours"]) / 1000 for it in items_data)
         cost_day = total_kwh_day * tarif
