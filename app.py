@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 from datetime import date, datetime
 from supabase import create_client, Client
 
-st.set_page_config(page_title="Meteran ⚡", page_icon="⚡", layout="wide")
+st.set_page_config(page_title="Hai's Listrik Tracker ⚡", page_icon="⚡", layout="wide")
 
 # ── Custom CSS ──────────────────────────────────────────────────────────────
 st.markdown("""
@@ -169,7 +169,7 @@ st.markdown("""
   <p style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#FFB020;margin:0 0 4px;">
     Simulasi & Pemantauan Konsumsi Daya
   </p>
-  <h1 style="margin:0;font-size:32px;font-weight:800;letter-spacing:-.02em;">⚡ Meteran</h1>
+  <h1 style="margin:0;font-size:32px;font-weight:800;letter-spacing:-.02em;">Hai's Listrik Tracker ⚡</h1>
   <p style="color:#8592A6;margin:6px 0 0;font-size:14px;">
     Simulasikan pemakaian peralatan, atau catat kWh harian untuk proyeksi tagihan bulanan.
   </p>
