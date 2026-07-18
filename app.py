@@ -126,10 +126,17 @@ def add_item(name, watt, qty, hours):
 def delete_item(item_id):
     db.table("meteran_items").delete().eq("id", item_id).execute()
 
-def upsert_log(log_date: str, kwh: float):
-    db.table("meteran_actual_logs").upsert({
+def upsert_log(log_date: str, log_time: str, sisa_token: float, kwh: float, is_topup: bool, topup_amount: float):
+    data = {
         "user_key": USER_KEY, "log_date": log_date, "kwh": float(kwh)
-    }, on_conflict="user_key,log_date").execute()
+    }
+    if sisa_token is not None:
+        data["log_time"] = log_time
+        data["sisa_token"] = float(sisa_token)
+        data["is_topup"] = is_topup
+        data["topup_amount"] = float(topup_amount)
+        
+    db.table("meteran_actual_logs").upsert(data, on_conflict="user_key,log_date").execute()
 
 def delete_log(log_id):
     db.table("meteran_actual_logs").delete().eq("id", log_id).execute()
@@ -337,19 +344,45 @@ with tab2:
     left2, right2 = st.columns([1.1, 1], gap="large")
 
     with left2:
-        st.markdown('<div class="section-title">Catat Pemakaian Hari Ini</div>', unsafe_allow_html=True)
-        st.caption("Masukkan angka kWh dari meteran / PLN Mobile setiap hari.")
+        st.markdown('<div class="section-title">Catat Sisa Token Hari Ini</div>', unsafe_allow_html=True)
+        st.caption("Masukkan angka sisa kWh di meteran. Sistem otomatis menghitung pemakaianmu.")
 
-        date_in = st.date_input("Tanggal", value=date.today(), key="log_date")
-        kwh_in = st.number_input("Pemakaian (kWh)", min_value=0.0, step=0.1,
-                                  format="%.2f", key="log_kwh")
+        c1, c2 = st.columns(2)
+        with c1:
+            date_in = st.date_input("Tanggal", value=date.today(), key="log_date")
+        with c2:
+            time_in = st.time_input("Jam", value=datetime.now().time(), key="log_time")
+            
+        sisa_token_in = st.number_input("Sisa Token di Meteran (kWh)", min_value=0.0, step=0.1, format="%.2f", key="log_token")
+        
+        is_topup = st.checkbox("Saya isi/beli token baru hari ini", key="log_is_topup")
+        topup_amount = 0.0
+        if is_topup:
+            topup_amount = st.number_input("Jumlah Beli Token (kWh)", min_value=0.0, step=0.1, format="%.2f")
 
-        if st.button("➕ Catat Pemakaian", use_container_width=True, type="primary"):
-            if kwh_in >= 0:
-                upsert_log(str(date_in), kwh_in)
-                st.session_state.logs = load_logs()
-                st.success(f"✅ Tersimpan: {date_in} → {kwh_in:.2f} kWh")
-                st.rerun()
+        if st.button("➕ Catat Token", use_container_width=True, type="primary"):
+            logs = st.session_state.logs
+            # Cari data token sebelumnya
+            prev_logs = [l for l in logs if l["log_date"] < str(date_in) and l.get("sisa_token") is not None]
+            
+            kwh_calc = 0.0
+            if prev_logs:
+                prev_log = sorted(prev_logs, key=lambda x: x["log_date"])[-1]
+                prev_token = prev_log.get("sisa_token", 0)
+                if is_topup:
+                    kwh_calc = (prev_token + topup_amount) - sisa_token_in
+                else:
+                    kwh_calc = prev_token - sisa_token_in
+                
+                # Cegah minus jika user salah ketik
+                if kwh_calc < 0: kwh_calc = 0.0
+            else:
+                st.warning("Catatan token pertama! Pemakaian kWh hari ini dicatat 0, akan dihitung normal besok.")
+
+            upsert_log(str(date_in), str(time_in)[:8], sisa_token_in, kwh_calc, is_topup, topup_amount)
+            st.session_state.logs = load_logs()
+            st.success(f"✅ Tersimpan! Pemakaian dihitung: {kwh_calc:.2f} kWh")
+            st.rerun()
 
         if st.button("🗑️ Hapus Semua Riwayat", use_container_width=True):
             if st.session_state.get("confirm_reset_logs"):
@@ -370,18 +403,20 @@ with tab2:
             for lg in sorted_logs:
                 cost = lg["kwh"] * tarif
                 d = datetime.strptime(lg["log_date"], "%Y-%m-%d")
-                date_label = d.strftime("%-d %b %Y") if hasattr(d, "strftime") else lg["log_date"]
-                try:
-                    date_label = d.strftime("%d %b %Y")
-                except Exception:
-                    date_label = lg["log_date"]
+                date_label = d.strftime("%d %b %Y")
+                time_label = lg.get("log_time", "")
+                if time_label: time_label = time_label[:5] # "HH:MM"
+                
+                sisa_str = f"Sisa: {lg['sisa_token']} kWh" if lg.get("sisa_token") is not None else "Data Lama"
+                if lg.get("is_topup"): sisa_str += f" (+{lg.get('topup_amount')} kWh)"
+                
                 c_a, c_b = st.columns([5, 1])
                 with c_a:
                     st.markdown(f"""
                     <div class="item-row">
                       <div>
-                        <div class="item-name">📅 {date_label}</div>
-                        <div class="item-meta">{lg['kwh']:.2f} kWh</div>
+                        <div class="item-name">📅 {date_label} {time_label}</div>
+                        <div class="item-meta">{lg['kwh']:.2f} kWh terpakai · {sisa_str}</div>
                       </div>
                       <div class="item-cost">{fmt_rp(cost)}</div>
                     </div>""", unsafe_allow_html=True)
